@@ -1,21 +1,35 @@
 package main
 
 import (
+	"encoding/binary"
+	"encoding/json"
 	"fmt"
+	"goapi/massive_chat_rooms/common/message"
+	"io"
 	"net"
 )
 
 //处理与客户端的通讯
 func process(coon net.Conn) {
 	defer coon.Close()
-	buf := make([]byte, 1024)
-	read, err := coon.Read(buf[:4])
-	fmt.Println("Read the message sent by th client---")
-	if read != 4 || err != nil {
-		fmt.Println("read err:", err)
-		return
+	for {
+		pak, err := readPak(coon)
+		if err != nil {
+			if err == io.EOF {
+				fmt.Println("client and serve exit")
+				return
+			} else {
+				fmt.Println("readPak(coon) error = ", err)
+			}
+		}
+		err = serveProcessMessage(coon, &pak)
+		if err != nil {
+			fmt.Println("serveProcessMessage(coon,&pak) error=", err)
+			return
+		}
+		fmt.Println("readPak message = ", pak)
 	}
-	fmt.Println("The data read is:", buf[:4])
+
 }
 func main() {
 	fmt.Println("Serve listened in 8888")
@@ -33,4 +47,36 @@ func main() {
 		}
 		go process(coon)
 	}
+}
+
+//
+// readPak
+//  #Summary: read client data
+//  #Description:
+//
+func readPak(coon net.Conn) (mes message.Message, err error) {
+	buf := make([]byte, 1024)
+	_, err = coon.Read(buf[:4])
+	if err != nil {
+		fmt.Println("read err:", err)
+		return
+	}
+	fmt.Println("Read the message sent by th client---")
+	var readPak uint64
+	readPak = binary.BigEndian.Uint64(buf[0:4])
+	n, err := coon.Read(buf[:readPak])
+	if n != int(readPak) || err != nil {
+		fmt.Println("read err:", err)
+		return
+	}
+	err = json.Unmarshal(buf[:readPak], &mes)
+	if err != nil {
+		fmt.Println("json.Unmarshal(buf[:readPak], &mes) error = ", err)
+		return
+	}
+	fmt.Println("The data read is:", buf[:readPak])
+	return
+}
+func serveProcessMessage(coon net.Conn, mes *message.Message) (err error) {
+	return err
 }

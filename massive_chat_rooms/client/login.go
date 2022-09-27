@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"goapi/massive_chat_rooms/common/message"
 	"net"
+	"time"
 )
 
 func Login(userId int, userPwd string) (err error) {
@@ -41,6 +42,8 @@ func Login(userId int, userPwd string) (err error) {
 	pkgLen = uint64(len(data))
 	binary.BigEndian.PutUint64(buf[0:4], pkgLen)
 	n, err := conn.Write(data)
+	//serve request data
+	time.Sleep(10 * time.Second)
 	if n != 4 || err != nil {
 		fmt.Println("conn.Write(data) error = ", err)
 		return err
