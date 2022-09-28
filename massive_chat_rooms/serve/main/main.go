@@ -78,5 +78,40 @@ func readPak(coon net.Conn) (mes message.Message, err error) {
 	return
 }
 func serveProcessMessage(coon net.Conn, mes *message.Message) (err error) {
+	switch mes.MessageType {
+	case message.LoginMesType:
+		err = serveLogin(coon, mes)
+		if err != nil {
+			return err
+		}
+	case message.RegisterMesType:
+	default:
+		fmt.Println("message type not existence")
+	}
 	return err
+}
+func serveLogin(coon net.Conn, mes *message.Message) (err error) {
+	var (
+		loginMes    message.Login
+		resMes      message.Message
+		loginResMes message.ResMessage
+	)
+	err = json.Unmarshal([]byte(mes.MessageData), &loginMes)
+	resMes.MessageType = message.LoginResMesType
+	if err != nil {
+		fmt.Println("json.Unmarshal() fail err = ", err)
+		return
+	}
+	if loginMes.UserId == 100 && loginMes.UserPassword == "123456" {
+		loginResMes.ResCode = 200
+	} else {
+		loginResMes.ResCode = 500
+		loginResMes.MessageData = "user not exit!"
+	}
+	_, err = json.Marshal(loginResMes)
+	if err != nil {
+		fmt.Println("json.Marshal() fail", err)
+		return
+	}
+	return
 }

@@ -2,6 +2,7 @@ package message
 
 const (
 	LoginMesType    = "LoginMes"
+	RegisterMesType = "RegisterMes"
 	LoginResMesType = "LoginResMes"
 )
 

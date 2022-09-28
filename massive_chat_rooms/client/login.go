@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"goapi/massive_chat_rooms/common/message"
 	"net"
-	"time"
 )
 
 func Login(userId int, userPwd string) (err error) {
@@ -43,11 +42,28 @@ func Login(userId int, userPwd string) (err error) {
 	binary.BigEndian.PutUint64(buf[0:4], pkgLen)
 	n, err := conn.Write(data)
 	//serve request data
-	time.Sleep(10 * time.Second)
+	//time.Sleep(10 * time.Second)
+
+	pkg, err := readPkg(conn)
+	if err != nil {
+		fmt.Println("readPkg(conn) error = ", err)
+		return
+	}
+	//request loginMessage
+	var loginMes message.ResMessage
+	err = json.Unmarshal([]byte(pkg.MessageData), &loginMes)
+	if err != nil {
+		return
+	}
+	if loginMes.ResCode == 200 {
+		fmt.Println("login success!")
+	} else if loginMes.ResCode == 500 {
+		fmt.Println(loginMes.ResCode)
+	}
 	if n != 4 || err != nil {
 		fmt.Println("conn.Write(data) error = ", err)
-		return err
+		return
 	}
 	fmt.Printf("client send message length = %d , messge = %s", len(data), string(data))
-	return nil
+	return
 }
